@@ -12,9 +12,9 @@ interface IParams {
 export async function GET(_request: NextRequest, { params }: IParams) {
   try {
     const companyId = Number(params.companyId);
-    if (!companyId) {
-      return NextResponse.json({ error: 'Invalid companyId' }, { status: 400 });
-    }
+    if (isNaN(companyId) || !companyId) {
+    return NextResponse.json({ error: 'Invalid companyId' }, { status: 400 });
+    } 
 
     const company = await prisma.company.findUnique({
       where: { id: companyId },
@@ -32,10 +32,14 @@ export async function GET(_request: NextRequest, { params }: IParams) {
 }
 
 // PUT: Обновить компанию
-export async function PUT(request: Request, { params }: IParams) {
+export async function PUT(request: NextRequest, { params }: IParams) {
   try {
     const companyId = Number(params.companyId);
-    const { name } = await request.json();
+    const body = await request.json();
+    if (!body.name || typeof body.name !== 'string') {
+        return NextResponse.json({ error: 'Invalid or missing "name" field' }, { status: 400 });
+    }
+    const { name } = body;
 
     const updated = await prisma.company.update({
       where: { id: companyId },
@@ -50,7 +54,7 @@ export async function PUT(request: Request, { params }: IParams) {
 }
 
 // DELETE: Удалить компанию
-export async function DELETE(_request: Request, { params }: IParams) {
+export async function DELETE(_request: NextRequest, { params }: IParams) {
   try {
     const companyId = Number(params.companyId);
     await prisma.company.delete({
